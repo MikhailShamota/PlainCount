@@ -21,7 +21,34 @@
         top: 20px;
         left: 20px;
     }
+    .d3-tip {
+        line-height: 1;
+        padding: 6px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        border-radius: 4px;
+        font-size: 12px;
+    }
 
+    /* Creates a small triangle extender for the tooltip */
+    .d3-tip:after {
+        box-sizing: border-box;
+        display: inline;
+        font-size: 10px;
+        width: 100%;
+        line-height: 1;
+        color: rgba(0, 0, 0, 0.8);
+        content: "\25BC";
+        position: absolute;
+        text-align: center;
+    }
+
+    /* Style northward tooltips specifically */
+    .d3-tip.n:after {
+        margin: -2px 0 0 0;
+        top: 100%;
+        left: 0;
+    }
 </style>
 <button>Reset</button>
 
@@ -44,7 +71,8 @@
 </svg>
 </td></tr></table>
 
-<script src="//d3js.org/d3.v4.js"></script>
+<script src="d3.v4.js"></script>
+<script src="d3-tip.js"></script>
 <script>
 
     var svg = d3.select("svg"),
@@ -93,8 +121,48 @@
     d3.select("button")
             .on("click", resetted);
 
+    d3.csv("testdata.csv", function(error, data) {
+
+        data.forEach( function( d ) {
+
+            d.speed = Number( d.speed );
+            d.workload = Number(d.workload );
+        });
+        // Scale the range of the data
+        //x.domain([0, d3.max(data, function(d) { return d.speed; })]);
+        //y.domain([0, d3.max(data, function(d) { return d.workload; })]);
+
+        var xMax = d3.max(data, function(d) { return d.speed; }),
+            xMin = d3.min(data, function(d) { return d.speed; }),
+
+            yMax = d3.max(data, function(d) { return d.workload; }),
+            yMin = d3.min(data, function(d) { return d.workload; });
+
+
+        x.domain([xMin, xMax]);
+        y.domain([yMin, yMax]);
+
+
+        var tip = d3.tip()
+                .attr("class", "d3-tip")
+                .offset([-10, 0])
+                .html(function(d) { return d.ops; });
+
+        svg.call(tip);
+
+    // Add the scatterplot
+        svg.selectAll("dot")
+                .data(data)
+                .enter().append("circle")
+                .attr("r", 3.5)
+                .attr("cx", function(d) { return x(d.speed); })
+                .attr("cy", function(d) { return y(d.workload); })
+                .on("mouseover", tip.show)
+                .on("mouseout", tip.hide);
+    });
+
     svg.call(zoom);
-    zoom.scaleTo(svg, 0.80);
+    //zoom.scaleTo(svg, 0.80);
 
     svg.append("text")
             .attr("text-anchor", "middle")
@@ -110,6 +178,7 @@
         view.attr("transform", d3.event.transform);
         gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
         gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+        //svg.selectAll("dot").attr("transform", transform);
     }
 
     function resetted() {
