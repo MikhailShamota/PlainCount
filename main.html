@@ -21,6 +21,11 @@
         top: 20px;
         left: 20px;
     }
+
+    .dot {
+        fill-opacity: .5;
+    }
+
     .d3-tip {
         line-height: 1;
         padding: 6px;
@@ -54,8 +59,12 @@
 
 <table class="wrapper" id="dMenu" style="width: 100%;height: 100%;background-color: #989898; position: absolute; top:0; bottom: 0;left: 0; right: 0; margin: auto;text-align: center" >
     <tr><td>
+
+        <!--<div id="scatter"></div>-->
 <svg width="960" height="500">
+
     <defs>
+
         <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop   offset="0.0%" stop-color="#2c7bb6"></stop>
             <stop  offset="12.5%" stop-color="#00a6ca"></stop>
@@ -79,18 +88,14 @@
         width = +svg.attr("width"),
         height = +svg.attr("height");
 
-    var zoom = d3.zoom()
-            .scaleExtent([-29, 40])
-            //.translateExtent([[-100, -100], [width + 100, height + 100]])
-            .translateExtent([[0,0], [width, height]])
-            .on("zoom", zoomed);
+
 
     var x = d3.scaleLinear()
-            .domain([-1, width + 1])
+            //.domain([-1, width + 1])
             .range([-1, width + 1]);
 
     var y = d3.scaleLinear()
-            .domain([-1, height + 1])
+            //.domain([-1, height + 1])
             .range([-1, height + 1]);
 
     var xAxis = d3.axisBottom(x)
@@ -123,14 +128,17 @@
 
     d3.csv("testdata.csv", function(error, data) {
 
+        var zoom = d3.zoom()
+                .scaleExtent([-29, 40])
+                .translateExtent([[-100, -100], [width + 100, height + 100]])
+                //.translateExtent([[0,0], [width, height]])
+                .on("zoom", zoomed);
+
         data.forEach( function( d ) {
 
             d.speed = Number( d.speed );
             d.workload = Number(d.workload );
         });
-        // Scale the range of the data
-        //x.domain([0, d3.max(data, function(d) { return d.speed; })]);
-        //y.domain([0, d3.max(data, function(d) { return d.workload; })]);
 
         var xMax = d3.max(data, function(d) { return d.speed; }),
             xMin = d3.min(data, function(d) { return d.speed; }),
@@ -138,10 +146,8 @@
             yMax = d3.max(data, function(d) { return d.workload; }),
             yMin = d3.min(data, function(d) { return d.workload; });
 
-
         x.domain([xMin, xMax]);
         y.domain([yMin, yMax]);
-
 
         var tip = d3.tip()
                 .attr("class", "d3-tip")
@@ -150,16 +156,21 @@
 
         svg.call(tip);
 
-    // Add the scatterplot
-        svg.selectAll("dot")
+        //Add the scatterplot
+        /*var scatter = svg.append("g")
+                .attr("id", "scatterplot")
+                .attr("clip-path", "url(#clip)");*/
+
+        svg.selectAll("circle")
                 .data(data)
                 .enter().append("circle")
+                //.attr("class", "dot")
                 .attr("r", 3.5)
                 .attr("cx", function(d) { return x(d.speed); })
                 .attr("cy", function(d) { return y(d.workload); })
                 .on("mouseover", tip.show)
                 .on("mouseout", tip.hide);
-    });
+
 
     svg.call(zoom);
     //zoom.scaleTo(svg, 0.80);
@@ -178,8 +189,19 @@
         view.attr("transform", d3.event.transform);
         gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
         gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
-        //svg.selectAll("dot").attr("transform", transform);
+        svg.selectAll("circle").attr("transform", d3.event.transform);
+
+        /*
+        var t = scatter.transition().duration(750);
+        svg.select("axis--x").transition(t).call(xAxis);
+        svg.select("axis--y").transition(t).call(yAxis);
+        scatter.selectAll("circle").transition(t)
+                .attr("cx", function (d) { return x(d.speed); })
+                .attr("cy", function (d) { return y(d.workload); });
+                */
     }
+
+    });
 
     function resetted() {
         svg.transition()
