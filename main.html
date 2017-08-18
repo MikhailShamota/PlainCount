@@ -60,13 +60,12 @@
 <table class="wrapper" id="dMenu" style="width: 100%;height: 100%;background-color: #989898; position: absolute; top:0; bottom: 0;left: 0; right: 0; margin: auto;text-align: center" >
     <tr><td>
 
-        <!--<div id="scatter"></div>-->
-<svg width="960" height="500">
-
+<svg width="860" height="600">
     <defs>
-
-        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop   offset="0.0%" stop-color="#2c7bb6"></stop>
+        <linearGradient id="gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop   offset="0.0%" stop-color="#5E6076"></stop>
+            <stop   offset="100.0%" stop-color="#B7FFB5"></stop>
+            <!--<stop   offset="0.0%" stop-color="#2c7bb6"></stop>
             <stop  offset="12.5%" stop-color="#00a6ca"></stop>
             <stop  offset="25.0%" stop-color="#00ccbc"></stop>
             <stop  offset="37.5%" stop-color="#90eb9d"></stop>
@@ -74,7 +73,7 @@
             <stop  offset="62.5%" stop-color="#f9d057"></stop>
             <stop  offset="75.0%" stop-color="#f29e2e"></stop>
             <stop  offset="87.5%" stop-color="#e76818"></stop>
-            <stop offset="100.0%" stop-color="#d7191c"></stop>
+            <stop offset="100.0%" stop-color="#d7191c"></stop>-->
         </linearGradient>
     </defs>
 </svg>
@@ -86,47 +85,15 @@
 
     var svg = d3.select("svg"),
         width = +svg.attr("width"),
-        height = +svg.attr("height");
-
-
-
-    var x = d3.scaleLinear()
-            //.domain([-1, width + 1])
-            .range([-1, width + 1]);
-
-    var y = d3.scaleLinear()
-            //.domain([-1, height + 1])
-            .range([-1, height + 1]);
-
-    var xAxis = d3.axisBottom(x)
-            .ticks((width + 2) / (height + 2) * 10)
-            .tickSize(height)
-            .tickPadding(25 - height);
-
-    var yAxis = d3.axisRight(y)
-            .ticks(10)
-            .tickSize(width)
-            .tickPadding(25 - width);
-
-    var view = svg.append("rect")
-            .attr("class", "view")
-            .attr("x", 0.5)
-            .attr("y", 0.5)
-            .attr("width", width - 1)
-            .attr("height", height - 1);
-
-    var gX = svg.append("g")
-            .attr("class", "axis axis--x")
-            .call(xAxis);
-
-    var gY = svg.append("g")
-            .attr("class", "axis axis--y")
-            .call(yAxis);
+        height = +svg.attr("height"),
+        domainMargin = 0.05;
 
     d3.select("button")
             .on("click", resetted);
 
-    d3.csv("testdata.csv", function(error, data) {
+    var fileName = "testdata.csv";
+
+    d3.csv( fileName, function(error, data) {
 
         var zoom = d3.zoom()
                 .scaleExtent([-29, 40])
@@ -146,8 +113,41 @@
             yMax = d3.max(data, function(d) { return d.workload; }),
             yMin = d3.min(data, function(d) { return d.workload; });
 
-        x.domain([xMin, xMax]);
-        y.domain([yMin, yMax]);
+        var xRangeMargin = (xMax - xMin)*domainMargin,
+            yRangeMargin = (yMax - yMin)*domainMargin;
+
+        var x = d3.scaleLinear()
+                .domain([xMin-xRangeMargin, xMax+xRangeMargin])
+                .range([-1, width + 1]);
+
+        var y = d3.scaleLinear()
+                .domain([yMin-yRangeMargin, yMax+yRangeMargin])
+                .range([-1, height + 1]);
+
+        var xAxis = d3.axisBottom(x)
+                .ticks((width + 2) / (height + 2) * 10)
+                .tickSize(height)
+                .tickPadding(25 - height);
+
+        var yAxis = d3.axisRight(y)
+                .ticks(10)
+                .tickSize(width)
+                .tickPadding(25 - width);
+
+        var view = svg.append("rect")
+                .attr("class", "view")
+                .attr("x", 0.5)
+                .attr("y", 0.5)
+                .attr("width", width - 1)
+                .attr("height", height - 1);
+
+        var gX = svg.append("g")
+                .attr("class", "axis axis--x")
+                .call(xAxis);
+
+        var gY = svg.append("g")
+                .attr("class", "axis axis--y")
+                .call(yAxis);
 
         var tip = d3.tip()
                 .attr("class", "d3-tip")
@@ -156,57 +156,44 @@
 
         svg.call(tip);
 
-        //Add the scatterplot
-        /*var scatter = svg.append("g")
-                .attr("id", "scatterplot")
-                .attr("clip-path", "url(#clip)");*/
-
         svg.selectAll("circle")
                 .data(data)
                 .enter().append("circle")
-                //.attr("class", "dot")
+                .attr("class", "dot")
                 .attr("r", 3.5)
                 .attr("cx", function(d) { return x(d.speed); })
                 .attr("cy", function(d) { return y(d.workload); })
                 .on("mouseover", tip.show)
                 .on("mouseout", tip.hide);
 
+        svg.append("text")
+                .attr("text-anchor", "middle")
+                .attr("transform", "translate("+ (width/2) +","+(height - 10)+")")  // centre below axis
+                .text("скорость оформления операций");
 
-    svg.call(zoom);
-    //zoom.scaleTo(svg, 0.80);
+        svg.append("text")
+                .attr("text-anchor", "middle")
+                .attr("transform", "translate("+ (width - 10) +","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
+                .text("нагрузка");
 
-    svg.append("text")
-            .attr("text-anchor", "middle")
-            .attr("transform", "translate("+ (width/2) +","+(height - 10)+")")  // centre below axis
-            .text("скорость оформления операций");
+        svg.call(zoom);
+        zoom.scaleTo( svg, 0.8 );
 
-    svg.append("text")
-            .attr("text-anchor", "middle")
-            .attr("transform", "translate("+ (width - 10) +","+(height/2)+")rotate(-90)")  // text is drawn off the screen top left, move down and out and rotate
-            .text("нагрузка");
-
-    function zoomed() {
-        view.attr("transform", d3.event.transform);
-        gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
-        gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
-        svg.selectAll("circle").attr("transform", d3.event.transform);
-
-        /*
-        var t = scatter.transition().duration(750);
-        svg.select("axis--x").transition(t).call(xAxis);
-        svg.select("axis--y").transition(t).call(yAxis);
-        scatter.selectAll("circle").transition(t)
-                .attr("cx", function (d) { return x(d.speed); })
-                .attr("cy", function (d) { return y(d.workload); });
-                */
-    }
-
+        function zoomed() {
+            view.attr("transform", d3.event.transform);
+            gX.call(xAxis.scale(d3.event.transform.rescaleX(x)));
+            gY.call(yAxis.scale(d3.event.transform.rescaleY(y)));
+            svg.selectAll("circle").attr("transform", d3.event.transform);
+        }
     });
+
+
 
     function resetted() {
         svg.transition()
                 .duration(750)
                 .call(zoom.transform, d3.zoomIdentity);
     }
+
 
 </script>
