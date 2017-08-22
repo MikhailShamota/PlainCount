@@ -17,6 +17,7 @@
 
             display: none;
         }
+
         .legend {
             font-family: 'Arial', sans-serif;
             fill: #333333;
@@ -31,15 +32,23 @@
 <body>
 
 <table class="wrapper" id="dMenu" style="width: 100%;height: 100%;background-color: #989898; position: absolute; top:0; bottom: 0;left: 0; right: 0; margin: auto;text-align: center" >
-    <tr><td>
+    <tr>
+        <td>
 
-    <div class="radarChart"></div>
+            <div class="radarChart"></div>
 
-    </td></tr>
+        </td>
+        <td>
+
+            <div class="divLegend" style="height:100%;width:100%;"></div>
+
+        </td>
+    </tr>
 </table>
 
 <script src="d3/d3.js"></script>
 <script src="RadarChart/radarChart.js"></script>
+<script src="legend.js"></script>
 <script>
 
     /* Radar chart design created by Nadieh Bremer - VisualCinnamon.com */
@@ -106,6 +115,7 @@
             }
         }
 
+        dataInfo = ["AAAA","BBBBB","AAAA2","BBBB2B","AA4AA","BBB4BB","A5AAA","B5BBBB","AA6AA","BB6BBB","AA7AA","B8BBBB"];
         //////////////////////////////////////////////////////////////
         //////////////////// Draw the Chart //////////////////////////
         //////////////////////////////////////////////////////////////
@@ -117,11 +127,38 @@
             levels: 5,
             roundStrokes: true,
             color: d3.scaleOrdinal(d3.schemeCategory20c),
-            dotRadius: 2,
-            dataInfo: dataInfo
+            dotRadius: 0
         };
         //Call function to draw the Radar chart
-        RadarChart(".radarChart", data, radarChartOptions);
+        var radar = RadarChart(".radarChart", data, radarChartOptions);
+
+        var sampleOrdinal = d3.scaleOrdinal(d3.schemeCategory20c).domain(dataInfo);
+        var verticalLegend = legend()
+                .labelFormat("none")
+                .cellPadding(5)
+                .orientation("vertical")
+                .units("Области")
+                .cellWidth(25)
+                .cellHeight(18)
+                .inputScale(sampleOrdinal)
+                .cellStepping(10)
+                .callbackMouseOver( function(i) {
+
+                    radar.selectArea( i, true );
+                })
+                .callbackMouseOut( function(i) {
+
+                    radar.selectArea( i, false );
+                });
+        d3.select(".divLegend")
+                .append("svg")
+                .attr("width",  width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" +margin.left+ ", " + height * 0.5 +")")
+                .attr("class", "legend")
+                .call(verticalLegend);
+
 
     });
 </script>

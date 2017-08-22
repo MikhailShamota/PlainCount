@@ -19,10 +19,37 @@ function RadarChart(id, data, options) {
         opacityCircles: 0.1, 	//The opacity of the circles of each blob
         strokeWidth: 1, 		//The width of the stroke around each blob
         roundStrokes: false,	//If true the area and stroke will follow a round path (cardinal-closed)
-        color: d3.scaleOrdinal(d3.schemeCategory10), //Color function,
-        dataInfo: null
+        color: d3.scaleOrdinal(d3.schemeCategory10) //Color function,
+        //dataInfo: null
     };
 
+    this.selectArea = function( i, on ) {
+
+        on &&
+        d3.selectAll(".radarArea")
+            .transition().duration(200)
+            .style("fill-opacity", 0)
+        && d3.selectAll(".radarStroke")
+            .transition().duration(200)
+            .style("stroke", "transparent" )
+        && d3.select( '#r'+i )
+            .transition().duration(200)
+            .style("fill-opacity", 0.7)
+        && d3.select("#rs"+i)
+            .transition().duration(200)
+            .style("stroke", "black" )
+
+        || d3.selectAll(".radarArea")
+            .transition().duration(200)
+            .style("fill-opacity", cfg.opacityArea)
+        && d3.selectAll(".radarStroke")
+            .transition().duration(200)
+            .style("stroke", function(d,i) { return cfg.color(i); })
+        && tooltip.style('opacity', 0);
+
+        //d3.selectAll( '.radarArea' ).style("fill-opacity", 0);
+        //d3.select( '#r'+i ).style("fill-opacity", 1);
+    }
     //Put all of the options into a variable called cfg
     if('undefined' !== typeof options){
         for(var i in options){
@@ -144,7 +171,8 @@ function RadarChart(id, data, options) {
         .angle(function(d,i) {	return i*angleSlice; });
 
     if(cfg.roundStrokes) {
-        radarLine.curve(d3.curveCardinalClosed)
+        //radarLine.curve(d3.curveBasisClosed);
+        radarLine.curve(d3.curveCardinalClosed);
     }
 
     //Create a wrapper for the blobs
@@ -157,38 +185,44 @@ function RadarChart(id, data, options) {
     blobWrapper
         .append("path")
         .attr("class", "radarArea")
+        .attr("id", function(d,i) { return "r"+i; } )
         .attr("d", function(d,i) { return radarLine(d); })
         .style("fill", function(d,i) { return cfg.color(i); })
         .style("fill-opacity", cfg.opacityArea)
         .on('mouseover', function (d,i){
+
+            selectArea( i, true );
             //Dim all blobs
-            d3.selectAll(".radarArea")
+            /*d3.selectAll(".radarArea")
                 .transition().duration(200)
                 .style("fill-opacity", 0.1);
             //Bring back the hovered over blob
             d3.select(this)
                 .transition().duration(200)
-                .style("fill-opacity", 0.7);
+                .style("fill-opacity", 0.7);*/
 
+            /*
             cfg.dataInfo && tooltip
                 .attr('x', 0)
                 .attr('y', 0)
                 .text( cfg.dataInfo[i] )
                 .transition().duration(200)
-                .style('opacity', 1);
+                .style('opacity', 1);*/
         })
         .on('mouseout', function(){
             //Bring back all blobs
-            d3.selectAll(".radarArea")
+            selectArea( i, false );
+            /*d3.selectAll(".radarArea")
                 .transition().duration(200)
                 .style("fill-opacity", cfg.opacityArea);
 
-            tooltip.style('opacity', 0);
+            tooltip.style('opacity', 0);*/
         });
 
     //Create the outlines
     blobWrapper.append("path")
         .attr("class", "radarStroke")
+        .attr("id", function(d,i) { return "rs"+i; } )
         .attr("d", function(d,i) { return radarLine(d); })
         .style("stroke-width", cfg.strokeWidth + "px")
         .style("stroke", function(d,i) { return cfg.color(i); })
@@ -279,4 +313,5 @@ function RadarChart(id, data, options) {
         });
     }//wrap
 
+    return this;
 }//RadarChart
