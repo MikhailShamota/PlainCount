@@ -155,7 +155,7 @@
                 .attr("width",  width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
-                .attr("transform", "translate(" +margin.left+ ", " + height * 0.5 +")")
+                .attr("transform", "translate(" +margin.left+ ", " + (height + margin.top + margin.bottom) * 0.5 +")")
                 .attr("class", "legend")
                 .call(verticalLegend);
 
