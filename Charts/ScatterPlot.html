@@ -86,8 +86,8 @@
         </svg>
     </td></tr></table>
 
-<script src="d3/d3.js"></script>
-<script src="d3-tip-master/d3-tip.js"></script>
+<script src="../d3/d3.js"></script>
+<script src="../js/d3-tip.js"></script>
 
 <script>
 
@@ -99,7 +99,7 @@
     d3.select("button")
             .on("click", resetted);
 
-    var fileName = "testdata.csv";
+    var fileName = "../Data/testdata.csv";
 
     d3.csv( fileName, function(error, data) {
 
