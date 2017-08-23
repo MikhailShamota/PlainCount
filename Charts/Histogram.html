@@ -57,9 +57,7 @@
                     .rangeRound([0, width]).nice();
 
             var bins = d3.histogram()
-                    .domain(x.domain())
-                    //.thresholds(x.ticks(20))
-                    (values);
+                    .domain(x.domain())(values);
 
             var y = d3.scaleLinear()
                     .domain([0, d3.max(bins, function (d) {
@@ -80,6 +78,11 @@
                     .attr("width", x(bins[0].x1) - x(bins[0].x0) - 1)
                     .attr("height", function (d) {
                         return height - y(d.length);
+                    })
+                    .on("mouseover",function(d,i) {
+
+                        console.log(d);
+
                     });
 
             bar.append("text")
