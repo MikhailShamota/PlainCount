@@ -15,31 +15,60 @@
         fill: brown;
     }
 
+    td, th {
+        padding: 1px 4px;
+    }
+
+    table {
+        margin-right: auto;
+        margin-left: auto;
+    }
+
 </style>
+<body style="background-color: #989898">
+<table class="wrapper" id="chart" style="width: 100%;height: auto; position: absolute; top:0; bottom: 0;left: 0; right: 0; margin: auto;text-align: center" >
 
-<table class="wrapper" id="dMenu" style="width: 100%;height: 100%;background-color: #989898; position: absolute; top:0; bottom: 0;left: 0; right: 0; margin: auto;text-align: center" >
     <tr><td>
-
-        <p><textarea rows="10" cols="100" width="960px" id="ops"></textarea></p>
-        <svg width="960" height="500"></svg>
         <p>Затраты в расчете на одну транзакцию, &#x20bd;</p>
+        <svg width="960" height="500"></svg>
+
 
     </td></tr>
-</table>
+    <tr><td>
 
+        <div class="wrapper" id="tbl" style="height:100px" ></div>
+
+    </td></tr>
+
+</table>
+</body>
+
+<script src="../js/jquery-3.2.1.min.js"></script>
 <script src="../js/d3.min.js"></script>
+
 <script>
+
+    /**TODO in globals*/
+    ///usage $.urlParam('id')
+    $.urlParam = function(name){
+        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        return results && results[1] || 0;
+    };
+
+    var filterValue = $.urlParam('id') || undefined;
 
     var fileName = "../Data/OPS_Clusters.csv";
     var fieldKey = "OPS";
     var fieldValue = "RUB";
+    var fieldFilter = "K_means_min";
 
     d3.csv(fileName, function(d, i, columns) {
 
             //for (i = 1, t = 0; i < columns.length; ++i) t += d[columns[i]] = +d[columns[i]];
             d.$key = d[ fieldKey ];
             d.$value = d[ fieldValue ];
-            return d;
+
+            return !filterValue || d[ fieldFilter ] == filterValue ? d : null;
         },
         function(data) {
 
@@ -87,8 +116,46 @@
 
                         d3.selectAll("rect").style("fill", "steelblue");
                         d3.select(this).style("fill", "brown");
+                    })
+                    .on("click", function(d,i) {
 
-                        document.getElementById("ops").innerHTML = "Диапазон от " + d.x0 + " до " + d.x1 + ": " + data.filter( function(a) { return a.$value >= d.x0 && a.$value <= d.x1; }).map( function(a){ return a.$key} );
+                        var columns = [ fieldKey, fieldValue ];
+                        var tableData = data.filter( function(a) { return a.$value >= d.x0 && a.$value <= d.x1; }).map( function(a){ return [a.$key, a.$value]; } );
+                        d3.select("#tbl").html("");
+
+                        // The table generation function
+                        var table = d3.select("#tbl").append("table")
+                                .attr("width", "auto"),
+                                //.attr("style", "margin-left: auto;")
+                                //.attr("style", "margin-right: auto;"),
+                                thead = table.append("thead"),
+                                tbody = table.append("tbody");
+
+                        // append the header row
+                        thead.append("tr")
+                                .selectAll("th")
+                                .data(columns)
+                                .enter()
+                                .append("th")
+                                .text(function(column) { return column; });
+
+                        // create a row for each object in the data
+                        var rows = tbody.selectAll("tr")
+                                .data(tableData)
+                                .enter()
+                                .append("tr");
+
+                        // create a cell in each row for each column
+                        var cells = rows.selectAll("td")
+                                .data(function(row) {
+                                        return row;
+                                    })
+                                .enter()
+                                .append("td")
+                                .attr("style", "font-family: Courier") // sets the font style
+                                .html( function(d) {
+                                    return d;
+                                });
                     });
 
             bar.append("text")
