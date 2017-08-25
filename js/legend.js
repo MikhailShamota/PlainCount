@@ -13,6 +13,7 @@ var legend = function() {
     var cellPadding = 0;
     var mouseOverCallback = null;
     var mouseOutCallback = null;
+    //var clickCallback = null;
 
     function legend(g) {
 
@@ -50,6 +51,7 @@ var legend = function() {
                 mouseOutCallback(i);
             });
 
+
         g.selectAll("g.legendCells")
             .append("rect")
             .attr("height", cellHeight)
@@ -58,10 +60,20 @@ var legend = function() {
             .style("stroke", "black")
             .style("stroke-width", "1px");
 
+        /*
         g.selectAll("g.legendCells")
             .append("text")
             .attr("class", "breakLabels")
             .style("pointer-events", "none");
+            */
+        g.selectAll("g.legendCells")
+            .append("a")
+            .attr("class", "breakLabels")
+            //.style("pointer-events", "none")
+            .attr("xlink:href", function(d) {
+                return d.link; })
+            .append("text")
+            .attr("class", "breakLabels");
 
         g.append("text")
             .text(labelUnits)
@@ -71,8 +83,10 @@ var legend = function() {
     }
 
     legend.inputScale = function(newScale) {
-        if (!arguments.length) return scale;
+        if (!arguments.length)
+            return scale;
         scale = newScale;
+        var links = newScale.links;
         legendValues = [];
         if (scale.invertExtent) {
             //Is a quantile scale
@@ -82,8 +96,8 @@ var legend = function() {
             })
         }
         else {
-            scale.domain().forEach(function (el) {
-                var cellObject = {color: scale(el), stop: [el,""]}
+            scale.domain().forEach(function (el,i) {
+                var cellObject = {color: scale(el), stop: [el,""], link:scale.links[i]};
                 legendValues.push(cellObject)
             })
         }
@@ -166,6 +180,23 @@ var legend = function() {
         mouseOutCallback = callback;
         return this;
     }
+
+    /*
+    legend.links = function( array ) {
+
+        if (!arguments.length) return links;
+        links = array;
+        return this;
+    }
+*/
+    /*
+    legend.callbackClick = function( callback ) {
+
+        if (!arguments.length) return clickCallback;
+        clickCallback = callback;
+        return this;
+    }
+    */
 
     return legend;
 

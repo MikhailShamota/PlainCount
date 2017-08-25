@@ -115,7 +115,6 @@
             }
         }
 
-        dataInfo = ["AAAA","BBBBB","AAAA2","BBBB2B","AA4AA","BBB4BB","A5AAA","B5BBBB","AA6AA","BB6BBB","AA7AA","B8BBBB"];
         //////////////////////////////////////////////////////////////
         //////////////////// Draw the Chart //////////////////////////
         //////////////////////////////////////////////////////////////
@@ -132,33 +131,41 @@
         //Call function to draw the Radar chart
         var radar = RadarChart(".radarChart", data, radarChartOptions);
 
-        var sampleOrdinal = d3.scaleOrdinal(d3.schemeCategory20c).domain(dataInfo);
-        var verticalLegend = legend()
-                .labelFormat("none")
-                .cellPadding(5)
-                .orientation("vertical")
-                .units("Области")
-                .cellWidth(25)
-                .cellHeight(18)
-                .inputScale(sampleOrdinal)
-                .cellStepping(10)
-                .callbackMouseOver( function(i) {
+        d3.json( "../Data/OPSCategoriesNames.json" , function(data) {
 
-                    radar.selectArea( i, true );
-                })
-                .callbackMouseOut( function(i) {
+            dataInfo = data.map( function(d) { return d.labels.join( " | " ) + " [ " + d.count + " ]"; });
+            var dataLinks = data.map( function(d) { return "histogram.html?id="+d.cluster; });
 
-                    radar.selectArea( i, false );
-                });
-        d3.select(".divLegend")
-                .append("svg")
-                .attr("width",  width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" +margin.left+ ", " + (height + margin.top + margin.bottom) * 0.5 +")")
-                .attr("class", "legend")
-                .call(verticalLegend);
+            var sampleOrdinal = d3.scaleOrdinal(d3.schemeCategory20c).domain(dataInfo);
+            sampleOrdinal.links = dataLinks;
+            var verticalLegend = legend()
+                    .labelFormat("none")
+                    .cellPadding(5)
+                    .orientation("vertical")
+                    .units("")
+                    .cellWidth(25)
+                    .cellHeight(18)
+                    .inputScale(sampleOrdinal)
+                    .cellStepping(10)
+                    .callbackMouseOver(function (i) {
 
+                        radar.selectArea(i, true);
+                    })
+                    .callbackMouseOut(function (i) {
+
+                        radar.selectArea(i, false);
+                    });
+                    //.links(dataLinks);
+
+            d3.select(".divLegend")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + ", " + (height + margin.top + margin.bottom) * 0.5 + ")")
+                    .attr("class", "legend")
+                    .call(verticalLegend);
+        });
 
     });
 </script>
