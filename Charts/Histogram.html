@@ -55,12 +55,167 @@
         return results && results[1] || 0;
     };
 
-    var filterValue = $.urlParam('id') || undefined;
+    function get( from, callback ) {
 
-    var fileName = "../Data/OPS_Clusters.csv";
-    var fieldKey = "OPS";
-    var fieldValue = "RUB";
-    var fieldFilter = "K_means_min";
+        d3.csv( from.file,
+                function(d, i, columns) {
+
+                    d.$key = d[ from.key ];
+                    d.$value = d[ from.value ];
+
+                    return from.fWhere( d );
+                    //return !from.filterValue || d[ from.fieldFilter ] == from.filterValue ? d : null;
+                },
+                function(data) {
+
+                    callback( data, from );
+                }
+        );
+    }
+
+    var OPS = [];
+
+    /** Индекс | Кластер */
+    get(
+            {
+                file: "../Data/OPS_Clusters.csv",
+                key: "OPS",
+                value: "K_means_min",
+                fWhere: function( d ) { return d[ "K_means_min" ] == $.urlParam('id') || undefined ? d : null; }
+            },
+            function( data ) {
+
+                data.forEach( function( d ) {
+
+                    OPS[ d.$key ] = d.$value;
+
+                });
+
+                /** Подразделение | Индекс  | Дата | Номенклатура | Количество | Сумма | УФПС */
+                get(
+                        {
+                            file: "../Data/OPSResourcesData.csv",
+                            key: "Индекс",
+                            value: "Сумма",
+                            fWhere: function( d ) {
+                                return OPS[ d[ "Индекс" ] ] ? d : null;
+                            }
+                        },
+                        function( data, from ) {
+
+                            data reduce by Индекс
+
+                            var values = data.map(function(d) { return Number(d.$value); });
+
+                            var formatCount = d3.format(",.0f");
+
+                            var svg = d3.select("svg"),
+                                    margin = {top: 10, right: 30, bottom: 30, left: 30},
+                                    width = +svg.attr("width") - margin.left - margin.right,
+                                    height = +svg.attr("height") - margin.top - margin.bottom,
+                                    g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                            var x = d3.scaleLinear()
+                                    .domain(d3.extent(values))
+                                    .rangeRound([0, width]).nice();
+
+                            var bins = d3.histogram()
+                                    .domain(x.domain())(values);
+
+                            var y = d3.scaleLinear()
+                                    .domain([0, d3.max(bins, function (d) {
+                                        return d.length;
+                                    })])
+                                    .range([height, 0]);
+
+                            var bar = g.selectAll(".bar")
+                                    .data(bins)
+                                    .enter().append("g")
+                                    .attr("class", "bar")
+                                    .attr("transform", function (d) {
+
+                                        return "translate(" + x(d.x0) + "," + y(d.length) + ")";
+                                    });
+
+                            bar.append("rect")
+                                    .attr("x", 1)
+                                    .attr("width", x(bins[0].x1) - x(bins[0].x0) - 1)
+                                    .attr("height", function (d) {
+
+                                        return height - y(d.length);
+                                    })
+                                    .on("mouseover",function(d,i) {
+
+                                        d3.selectAll("rect").style("fill", "steelblue");
+                                        d3.select(this).style("fill", "brown");
+                                    })
+                                    .on("click", function(d,i) {
+
+                                        var columns = [ from.key, from.value ];
+                                        var tableData = data.filter( function(a) { return a.$value >= d.x0 && a.$value <= d.x1; }).sort( function(a,b) {return b.$value - a.$value } ).map( function(a){ return [a.$key, a.$value]; });
+                                        d3.select("#tbl").html("");
+
+                                        // The table generation function
+                                        var table = d3.select("#tbl").append("table")
+                                                .attr("width", "auto"),
+                                        //.attr("style", "margin-left: auto;")
+                                        //.attr("style", "margin-right: auto;"),
+                                                thead = table.append("thead"),
+                                                tbody = table.append("tbody");
+
+                                        // append the header row
+                                        thead.append("tr")
+                                                .selectAll("th")
+                                                .data(columns)
+                                                .enter()
+                                                .append("th")
+                                                .text(function(column) { return column; });
+
+                                        // create a row for each object in the data
+                                        var rows = tbody.selectAll("tr")
+                                                .data(tableData)
+                                                .enter()
+                                                .append("tr");
+
+                                        // create a cell in each row for each column
+                                        var cells = rows.selectAll("td")
+                                                .data(function(row) {
+                                                    return row;
+                                                })
+                                                .enter()
+                                                .append("td")
+                                                .attr("style", "font-family: Courier") // sets the font style
+                                                .html( function(d) {
+                                                    return d;
+                                                });
+                                    });
+
+                            bar.append("text")
+                                    .attr("dy", ".75em")
+                                    .attr("y", 6)
+                                    .attr("x", (x(bins[0].x1) - x(bins[0].x0)) / 2)
+                                    .attr("text-anchor", "middle")
+                                    .text(function (d) {
+                                        return formatCount(d.length);
+                                    });
+
+                            g.append("g")
+                                    .attr("class", "axis axis--x")
+                                    .attr("transform", "translate(0," + height + ")")
+                                    .call(d3.axisBottom(x));
+                        }
+                );
+            }
+    );
+
+
+
+    /*fileName = "../Data/OPSResourcesData.csv";
+    fieldKey = "ИндексОПС";
+    fieldValue = "Стоимость";
+
+    fieldFilter = "ИндексОПС";
+    var filterValue = $.urlParam('id') || undefined;
 
     d3.csv(fileName, function(d, i, columns) {
 
@@ -172,4 +327,5 @@
                     .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(x));
         });
+        */
 </script>
