@@ -29,7 +29,7 @@
 <table class="wrapper" id="chart" style="width: 100%;height: auto; position: absolute; top:0; bottom: 0;left: 0; right: 0; margin: auto;text-align: center" >
 
     <tr><td>
-        <p>Затраты в расчете на одну транзакцию, &#x20bd;</p>
+        <p>Затраты в расчете на 1000 транзакций, &#x20bd;</p>
         <svg width="960" height="500"></svg>
 
 
@@ -68,7 +68,7 @@
                 },
                 function(data) {
 
-                    callback( data, from );
+                      callback( data, from );
                 }
         );
     }
@@ -80,14 +80,14 @@
             {
                 file: "../Data/OPS_Clusters.csv",
                 key: "OPS",
-                value: "K_means_min",
+                value: "OperCount",
                 fWhere: function( d ) { return d[ "K_means_min" ] == $.urlParam('id') || undefined ? d : null; }
             },
             function( data ) {
 
                 data.forEach( function( d ) {
 
-                    OPS[ d.$key ] = d.$value;
+                    OPS[ d.$key ] = Number( d.$value );
 
                 });
 
@@ -103,9 +103,21 @@
                         },
                         function( data, from ) {
 
-                            data reduce by Индекс
+                            //group by key
+                            var dat = [],
+                                dat2 = [];
+                             data.forEach( function( item ) {
 
-                            var values = data.map(function(d) { return Number(d.$value); });
+                                 dat[ item.$key ] = ( dat[ item.$key ] || 0 ) + Number( item.$value );
+                             } );
+
+                            dat.forEach( function( d, i ) {
+
+                                dat2.push( { $key: i, $value: Math.round( 1000 * Number( d ) / OPS[ i ] ) } );
+                            });
+
+                            //var values = data.map(function(d) { return Number( d.$value ); });
+                            var values = dat2.map( function(d) { return Math.round( d.$value ); } );
 
                             var formatCount = d3.format(",.0f");
 
@@ -152,7 +164,7 @@
                                     .on("click", function(d,i) {
 
                                         var columns = [ from.key, from.value ];
-                                        var tableData = data.filter( function(a) { return a.$value >= d.x0 && a.$value <= d.x1; }).sort( function(a,b) {return b.$value - a.$value } ).map( function(a){ return [a.$key, a.$value]; });
+                                        var tableData = dat2.filter( function(a) { return a.$value >= d.x0 && a.$value <= d.x1; }).sort( function(a,b) {return b.$value - a.$value } ).map( function(a){ return [a.$key, a.$value]; });
                                         d3.select("#tbl").html("");
 
                                         // The table generation function
